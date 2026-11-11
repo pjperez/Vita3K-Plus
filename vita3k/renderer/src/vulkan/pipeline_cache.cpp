@@ -671,6 +671,11 @@ static Sha256Hash shader_cache_key(const SceGxmProgram *program, const Sha256Has
         hash[6] ^= 0x75;
         version_suffix += "u";
     }
+    if (!is_vertex) {
+        // fragment shaders without the face-disable kills (spirv_recompiler.cpp make_frag_initialize_function)
+        hash[9] ^= 0x4B;
+        version_suffix += "k";
+    }
     if (features.enable_memory_mapping && (features.uniform_preload_ubo & (is_vertex ? 1 : 2)) && !shader::get_uniform_preload_layout(*program).empty()) {
         // "p" shaders (no ArrayStride on the preload array) read garbage: never reuse them
         hash[8] ^= 0x9E;

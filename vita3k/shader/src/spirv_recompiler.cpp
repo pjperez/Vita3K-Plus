@@ -2382,6 +2382,15 @@ static spv::Function *make_frag_initialize_function(spv::Builder &b, Translation
         translate_state.interfaces.push_back(front_facing);
         translate_state.front_facing_id = front_facing;
     }
+    // The Vulkan renderer never disables a face through these (front_disabled and back_disabled stay 0:
+    // a disabled fragment program is a pipeline without one), and a kill a draw can never take still makes
+    // the driver treat every fragment as maybe discarded: no forward pixel kill and late depth writes on Mali
+    if (translate_state.is_vulkan) {
+        b.makeReturn(false);
+        b.setBuildPoint(last_build_point);
+        return frag_init_func;
+    }
+
     spv::Id front_disabled = utils::create_access_chain(b, spv::StorageClassUniform, translate_state.render_info_id, { b.makeIntConstant(FRAG_UNIFORM_front_disabled) });
     spv::Id back_disabled = utils::create_access_chain(b, spv::StorageClassUniform, translate_state.render_info_id, { b.makeIntConstant(FRAG_UNIFORM_back_disabled) });
     front_facing = b.createLoad(front_facing, spv::NoPrecision);
